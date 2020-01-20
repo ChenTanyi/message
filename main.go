@@ -38,7 +38,8 @@ func main() {
 	baseURI := flag.String("base", "", "base uri")
 
 	r := gin.Default()
-	r.Any(*baseURI, messageHandler)
+	group := r.Group(*baseURI)
+	group.Any("/*message", messageHandler)
 
 	if err := r.Run(fmt.Sprintf(":%d", *port)); err != nil {
 		fmt.Println(err)
