@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
@@ -14,20 +15,30 @@ func (m Message) Message() string {
 	return string(m)
 }
 
-var message Message
+var messages = make(map[string]Message)
 
 func messageHandler(c *gin.Context) {
-	receive := c.Query("message")
+	receive := strings.TrimSpace(c.Query("message"))
+	path := c.Request.URL.Path
+	if path[len(path)-1] != '/' {
+		c.Redirect(307, fmt.Sprintf("%s/?%s", path, c.Request.URL.RawQuery))
+		return
+	}
+
 	if receive != "" {
-		message = Message(receive)
+		if len(messages) > 1000 {
+			messages = make(map[string]Message)
+		}
+		messages[path] = Message(receive)
 
 		query := c.Request.URL.Query()
 		query.Del("message")
-		c.Redirect(302, fmt.Sprintf("./?%s", query.Encode()))
+		c.Redirect(307, fmt.Sprintf("./?%s", query.Encode()))
 		return
 	}
 
 	tpl := template.Must(template.New("Message").Parse(string(MustAsset("template/message.gohtml"))))
+	message, _ := messages[path]
 	if err := tpl.Execute(c.Writer, message); err != nil {
 		fmt.Println(err)
 	}
