@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ func (m Message) Message() string {
 }
 
 var messages = make(map[string]Message)
+var messageLock = &sync.RWMutex{}
 
 func messageHandler(c *gin.Context) {
 	receive := strings.TrimSpace(c.Query("message"))
@@ -26,6 +28,8 @@ func messageHandler(c *gin.Context) {
 	}
 
 	if receive != "" {
+		messageLock.Lock()
+		defer messageLock.Unlock()
 		if len(messages) > 1000 {
 			messages = make(map[string]Message)
 		}
@@ -36,6 +40,8 @@ func messageHandler(c *gin.Context) {
 		c.Redirect(307, fmt.Sprintf("./?%s", query.Encode()))
 		return
 	}
+	messageLock.RLock()
+	defer messageLock.RUnlock()
 
 	tpl := template.Must(template.New("Message").Parse(string(MustAsset("template/message.gohtml"))))
 	message, _ := messages[path]
