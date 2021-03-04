@@ -7,7 +7,12 @@
 
 <body>
     <div style="max-width: 1024px;">
-        <form>
+        <table>
+        {{ range .Keys }}
+            <td><a href={{.}}>{{.}}</a></td>
+        {{ end }}
+        </table>
+        <form method="post">
             <textarea type="text" name="message">{{ .Message }}</textarea>
             <div style="text-align: center;">
                 <button type="submit" formaction=".">Submit</button>
@@ -78,6 +83,17 @@
     .tooltip:hover .tooltiptext {
         visibility: visible;
         opacity: 0.75;
+    }
+
+    td {
+        max-width: 25em;
+        display: inline-block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        padding-right: 1em;
+        padding-top: 2px;
+        padding-bottom: 2px;
     }
 </style>
 
